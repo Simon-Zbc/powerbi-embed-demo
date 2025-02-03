@@ -1,0 +1,23 @@
+.Home {
+    height: 100%;
+    width: 100%;
+    justify-content: center;
+}
+
+.Embed-container {
+    height: 800px;
+    margin: 1% auto;
+    width: 1000px;
+}
+
+.Json-textarea {
+    width: 50%;
+    height: 150px;
+    margin: 0 auto;
+    display: block;
+    resize: vertical;
+}
+
+.Button-row button {
+    margin: 0 20px;
+}
