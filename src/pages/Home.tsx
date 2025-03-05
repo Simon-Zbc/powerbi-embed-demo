@@ -5,36 +5,151 @@ import { models, Report, Page, service, factories } from 'powerbi-client';
 import { Configuration, PublicClientApplication } from '@azure/msal-browser';
 import '../assets/styles/Home.css';
 
-const defaultJson = [
-    {
-        "layout": {
-            "x": 20,
-            "y": 20,
-            "width": 400,
-            "height": 300
-        },
-        "visualType": "pieChart",
-        "dataRoles": [
+const defaultJson = {
+    "report": {
+        "title": "Sample Report",
+        "pages": [
             {
-                "role": "Category",
-                "dataField": {
-                    "column": "Column1",
-                    "table": "Table1",
-                    "schema": "http://powerbi.com/product/schema#column"
-                }
+                "title": "Sample Page 1",
+                "visuals": [
+                    {
+                        "layout": {
+                            "x": 20,
+                            "y": 20,
+                            "width": 400,
+                            "height": 300
+                        },
+                        "visualType": "pieChart",
+                        "dataRoles": [
+                            {
+                                "role": "Category",
+                                "dataField": {
+                                    "column": "Column1",
+                                    "table": "Table1",
+                                    "schema": "http://powerbi.com/product/schema#column"
+                                }
+                            },
+                            {
+                                "role": "Y",
+                                "dataField": {
+                                    "aggregationFunction": "CountNonNull",
+                                    "column": "Column1",
+                                    "table": "Table1",
+                                    "schema": "http://powerbi.com/product/schema#columnAggr"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "layout": {
+                            "x": 500,
+                            "y": 20,
+                            "width": 400,
+                            "height": 300
+                        },
+                        "visualType": "columnChart",
+                        "dataRoles": [
+                            {
+                                "role": "Category",
+                                "dataField": {
+                                    "column": "Column1",
+                                    "table": "Table1",
+                                    "schema": "http://powerbi.com/product/schema#column"
+                                }
+                            },
+                            {
+                                "role": "Series",
+                                "dataField": {
+                                    "column": "Column1",
+                                    "table": "Table1",
+                                    "schema": "http://powerbi.com/product/schema#column"
+                                }
+                            },
+                            {
+                                "role": "Y",
+                                "dataField": {
+                                    "aggregationFunction": "CountNonNull",
+                                    "column": "Column1",
+                                    "table": "Table1",
+                                    "schema": "http://powerbi.com/product/schema#columnAggr"
+                                }
+                            }
+                        ]
+                    }
+                ]
             },
             {
-                "role": "Y",
-                "dataField": {
-                    "aggregationFunction": "CountNonNull",
-                    "column": "Column1",
-                    "table": "Table1",
-                    "schema": "http://powerbi.com/product/schema#columnAggr"
-                }
+                "title": "Sample Page 2",
+                "visuals": [
+                    {
+                        "layout": {
+                            "x": 20,
+                            "y": 20,
+                            "width": 400,
+                            "height": 300
+                        },
+                        "visualType": "columnChart",
+                        "dataRoles": [
+                            {
+                                "role": "Category",
+                                "dataField": {
+                                    "column": "Column1",
+                                    "table": "Table1",
+                                    "schema": "http://powerbi.com/product/schema#column"
+                                }
+                            },
+                            {
+                                "role": "Series",
+                                "dataField": {
+                                    "column": "Column1",
+                                    "table": "Table1",
+                                    "schema": "http://powerbi.com/product/schema#column"
+                                }
+                            },
+                            {
+                                "role": "Y",
+                                "dataField": {
+                                    "aggregationFunction": "CountNonNull",
+                                    "column": "Column1",
+                                    "table": "Table1",
+                                    "schema": "http://powerbi.com/product/schema#columnAggr"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "layout": {
+                            "x": 500,
+                            "y": 20,
+                            "width": 400,
+                            "height": 300
+                        },
+                        "visualType": "pieChart",
+                        "dataRoles": [
+                            {
+                                "role": "Category",
+                                "dataField": {
+                                    "column": "Column1",
+                                    "table": "Table1",
+                                    "schema": "http://powerbi.com/product/schema#column"
+                                }
+                            },
+                            {
+                                "role": "Y",
+                                "dataField": {
+                                    "aggregationFunction": "CountNonNull",
+                                    "column": "Column1",
+                                    "table": "Table1",
+                                    "schema": "http://powerbi.com/product/schema#columnAggr"
+                                }
+                            }
+                        ]
+                    }
+                ]
             }
         ]
     }
-]
+}
 
 const msalConfig: Configuration = {
     auth: {
@@ -60,7 +175,11 @@ const Home = () => {
 
     useEffect(() => {
         const initializeMsal = async () => {
-            await msalInstance.initialize();
+            try {
+                await msalInstance.initialize();
+            } catch (error) {
+                alert("Error initializing MSAL: " + (error as any).detailedMessage);
+            }
         };
         initializeMsal();
     }, []);
@@ -72,14 +191,14 @@ const Home = () => {
             });
             setAccessToken(response.accessToken);
         } catch (error) {
-            console.error("Error login:", error);
+            alert("Error login: " + (error as any).detailedMessage);
         }
     };
 
     const handleCreateReport = async () => {
         const embedContainer = document.getElementById('embedContainer');
         if (!embedContainer) {
-            console.error("Embed container not found.");
+            alert("Embed container not found.");
             return;
         }
 
@@ -96,28 +215,25 @@ const Home = () => {
             });
 
             if (!datasetsResponse.ok) {
-                if (datasetsResponse.status === 404) {
-                    console.error("PowerBI entity not found. Please check the group ID and dataset name.");
-                } else {
-                    console.error(`Error fetching datasets: ${datasetsResponse.statusText}`);
-                }
+                alert(`Error fetching datasets: ${datasetsResponse.status}. Please check the group ID and dataset name.`);
                 return;
             }
 
             const datasets = await datasetsResponse.json();
 
             if (datasets.error) {
-                console.error(datasets.error.code, datasets.error.message);
+                alert(datasets.error.code + ": " + datasets.error.message);
                 return;
             }
 
             const dataset = datasets.value.find((ds: any) => ds.name === datasetName);
 
             if (!dataset) {
-                console.error(`Dataset with name ${datasetName} not found`);
+                alert(`Dataset with name ${datasetName} not found`);
                 return;
             }
 
+            const reportJson = JSON.parse(inputValue);
             const embedConfig = {
                 type: 'report',
                 accessToken: accessToken,
@@ -125,6 +241,7 @@ const Home = () => {
                 datasetId: dataset.id,
                 groupId: groupId,
                 tokenType: models.TokenType.Aad,
+                pageName: reportJson.report.pages[0].title,
                 permissions: models.Permissions.All,
                 viewMode: models.ViewMode.Edit,
                 settings: {
@@ -147,23 +264,22 @@ const Home = () => {
             const createdReport = powerbiService.createReport(embedContainer, embedConfig);
             setReport(createdReport as Report);
         } catch (error) {
-            console.error("Error creating report:", error);
+            alert("Error creating report: " + (error as any).detailedMessage);
         }
     };
 
     const handleSaveAs = async () => {
         if (!report) {
-            console.error("Report is not initialized.");
+            alert("Report is not initialized.");
             return;
         }
 
-        const saveAsName = "New Report " + new Date().toISOString();
-
         try {
-            await report.saveAs({ name: saveAsName });
-            setSaveAsName(saveAsName);
+            const reportJson = JSON.parse(inputValue);
+            await report.saveAs({ name: reportJson.report.title });
+            setSaveAsName(reportJson.report.title);
         } catch (error) {
-            console.error("Error saving report:", error);
+            alert("Error saving report: " + (error as any).detailedMessage);
         }
     };
 
@@ -180,7 +296,7 @@ const Home = () => {
             });
 
             if (!reportsResponse.ok) {
-                console.error(`Error fetching reports: ${reportsResponse.statusText}`);
+                alert(`Error fetching reports: ${reportsResponse.status}`);
                 return;
             }
 
@@ -188,44 +304,38 @@ const Home = () => {
             const foundReport = reports.value.find((r: any) => r.name === saveAsName);
 
             if (!foundReport) {
-                console.error(`Report with name ${saveAsName} not found`);
+                alert(`Report with name ${saveAsName} not found`);
                 return;
             }
 
             setReportId(foundReport.id);
         } catch (error) {
-            console.error("Error getting report:", error);
+            alert("Error getting report: " + (error as any).detailedMessage);
         }
     };
 
-    const handleAddPage = async () => {
-        if (!report) {
-            console.error("Report is not initialized.");
-            return;
-        }
-        const newPageName = "New Page " + new Date().toISOString();
-        try {
-            let newPage = await report.addPage(newPageName);
-            setPage(newPage);
-        } catch (error) {
-            console.error("Error adding page:", error);
-        }
-    };
+    const handleCreateVisual = async () => {
+        let page: Page | undefined;
 
-    const handleAddVisual = async () => {
-        if (!page) {
+        const reportJson = JSON.parse(inputValue);
+        for (let index = 0; index < reportJson.report.pages.length; index++) {
             if (report) {
-                const pages = await report.getPages();
-                setPage(pages[0]);
-            } else {
-                console.error("No page reference found. Please create or fetch the page first.");
-                return;
+                try {
+                    const pages = await report.getPages();
+                    if (index === 0) {
+                        page = pages[0];
+                        await report.renamePage(pages[0].name, reportJson.report.pages[index].title);
+                    } else {
+                        page = await report.addPage(reportJson.report.pages[index].title);
+                    }
+                    await report.setPage(page.name);
+                } catch (error) {
+                    alert("Error creating page: " + (error as any).detailedMessage);
+                    return;
+                }
             }
-        }
 
-        try {
-            const visualsJson = JSON.parse(inputValue);
-            for (const visualJson of visualsJson) {
+            for (const visualJson of reportJson.report.pages[index].visuals) {
                 let layout;
                 let visualType;
                 let dataRoles;
@@ -247,35 +357,40 @@ const Home = () => {
                     height: layout.height,
                     displayState: { mode: models.VisualContainerDisplayMode.Visible }
                 };
-                if (page) {
-                    const response = await page.createVisual(visualType, customLayout, false);
-                    const visual = response.visual;
-        
-                    dataRoles.forEach((dataRole: any) => {
-                        visual.addDataField(dataRole.role, dataRole.dataField);
-                    });
+
+                try {
+                    if (page) {
+                        const response = await page.createVisual(visualType, customLayout, false);
+                        const visual = response.visual;
+                        // const capabilities = await visual.getCapabilities();
+                        // console.log(visualType, capabilities);
+                        for (const dataRole of dataRoles) {
+                            await visual.addDataField(dataRole.role, dataRole.dataField);
+                        }
+                    }
+                } catch (error) {
+                    alert("Error creating visual: " + (error as any).detailedMessage);
                 }
+
             };
-        } catch (error) {
-            console.error("Error adding visual:", error);
         }
     };
 
     const handleSave = async () => {
         if (!report) {
-            console.error("No report reference found. Please create or fetch the report first.");
+            alert("No report reference found. Please create or fetch the report first.");
             return;
         }
         try {
             await report.save();
         } catch (error) {
-            console.error("Error saving report:", error);
+            alert("Error saving report: " + (error as any).detailedMessage);
         }
     };
 
     const handleExport = async () => {
         if (!report) {
-            console.error("No report reference found. Please create or fetch the report first.");
+            alert("No report reference found. Please create or fetch the report first.");
             return;
         }
         try {
@@ -289,7 +404,8 @@ const Home = () => {
             });
 
             if (!exportResponse.ok) {
-                console.error(exportResponse);
+                alert(`Error exporting report: ${exportResponse.status}`);
+                return;
             }
 
             const blob = await exportResponse.blob();
@@ -300,7 +416,7 @@ const Home = () => {
             a.click();
             window.URL.revokeObjectURL(url);
         } catch (error) {
-            console.error("Error exporting report:", error);
+            alert("Error exporting report: " + (error as any).detailedMessage);
         }
     };
 
@@ -317,10 +433,10 @@ const Home = () => {
                 <button onClick={handleCreateReport}>Create Report</button>
                 <button onClick={handleSaveAs}>Save As</button>
                 <button onClick={handleGetReport}>Get Report</button>
-                <button onClick={handleAddPage}>Add Page</button>
-                <button onClick={handleAddVisual}>Add Visual</button>
+                <button onClick={handleCreateVisual}>Create Visual</button>
                 <button onClick={handleSave}>Save</button>
                 <button onClick={handleExport}>Export</button>
+                {/* <button onClick={handleTest}>Test</button> */}
             </div>
             <div id="embedContainer" className="Embed-container">
                 {reportId && (
